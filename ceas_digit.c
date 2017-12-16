@@ -6,12 +6,11 @@
 //--------------------variable definition----------------------------------
 
 int vec_numere[10]= { 63,6,91,79,102,109,125,7,127,111};/*  b'0000110,b'01011011,b'0101111,b'01100110,b'01101101,b'01111101,b'00000111,b'11111111,b'01101111 */
-volatile int flagTimer = 0, flagBut = 0, sec_buton = 0, min_buton = 0, alarma_buton = 0, startAlarma=0, stopAlarma = 0, flagButA=0,startCounter=0;
+volatile int flagTimer = 0, flagBut = 0, sec_buton = 0, min_buton = 0, alarma_buton = 0, startAlarma=0, stopAlarma = 0, AlarmaON=0,buzzAlarma=0,flagEroareAlarma=0,flagEroareCeas=0;
 int Scounter = 0, Mcounter=0,ZScounter = 0, ZMcounter=0; // numaratoare pentru secunde, zeciS, minute, zeciM
-int AScounter = 1, AMcounter=1,AZScounter = 1, AZMcounter=1; // numaratoare pentru secunde, zeciS, minute, zeciM ALARMA
-int functAlarma = 0;
+int AScounter = 0, AMcounter=0,AZScounter = 1, AZMcounter=0; // numaratoare pentru secunde, zeciS, minute, zeciM ALARMA
+int functAlarma = 0, buzzNr=0;
 int WaitCounter = 0; // numarator pentru palpait 4 secunde
-int ledAlarma=128, ledAlarma0=0;
 //------------------function declaration-----------------------------
 	
  void init (void)
@@ -41,7 +40,16 @@ int ledAlarma=128, ledAlarma0=0;
 
 }
 
- void Display(int cifra,int catod)  // functia care foloseste la afisare
+void Buzz()
+	{
+		if((AScounter==Scounter) & (AZScounter==ZScounter) & (AMcounter==Mcounter) & (AZMcounter==ZMcounter) & flagEroareAlarma==1 & flagEroareCeas==0) // refa aici!!!!!!!!!
+			{
+				
+				buzzAlarma=1;
+			}
+	}
+
+ void Display(int cifra,int catod)  // functia care foloseste la afisare MULTIPLEXAREA IN TIMP
 	{   
 		unsigned char cat_var = 0b00001000;
 		unsigned char masca_cat = 0b11110000;
@@ -54,179 +62,183 @@ int ledAlarma=128, ledAlarma0=0;
 	}
 
 
-void  check_buttons() // functia care verifica butoanele
+void  check_buttons() // functia care verifica butoanele. odata la 10ms
 	{ 
 		
+					
+	if(startAlarma==1)
+		{	
+			if(PORTBbits.RB0 == 0) // buton pentru setare secunde
+			{ 
 						
-		if(startAlarma==1)
-			{	
-				if(PORTBbits.RB0 == 0) // buton pentru setare secunde
+				if(sec_buton^PORTBbits.RB0) // detectez frontul
+					{ 
+						WaitCounter = 0;
+						AlarmaON=1;				
+						if(AScounter >= 9)
 							{ 
-								
-								if(sec_buton^PORTBbits.RB0) // detectez frontul
-									{ 
-										WaitCounter = 0;
-										
-										if(AScounter >= 9)
+								AScounter = 0;                     
+								PORTBbits.RB6=1;  // debug
+													
+									if(AZScounter >= 5)
+										{ 	AZScounter = 0;
+															
+											if(AMcounter >= 9)
+															
 											{ 
-											AScounter = 0;                     
-											PORTBbits.RB6=1;  // debug
-													
-													if(AZScounter >= 5)
-														{ 	AZScounter = 0;
-															
-															if(AMcounter >= 9)
-															
-															{ 
-																AMcounter =0;											
-																if(AZMcounter >= 5)
-																	{ AZMcounter =0;  }
-																else
-																	{  AZMcounter++; }
-															}
-															
-															else
-																{  AMcounter++; }
-														
-														}
-													else
-														{ AZScounter++; }
-													
+												AMcounter =0;											
+												if(AZMcounter >= 5)
+													{ AZMcounter =0;  }
+												else
+													{  AZMcounter++; }
 											}
-										else
-											{                                                          
-											AScounter++;
-											//AScounter++;
-											PORTBbits.RB6=0; // debug
-											}												
-									}
-							}	
+															
+												else
+													{  AMcounter++; }
+														
+													}
+												else
+												 { AZScounter++; }
+													
+							}
+						else
+							{                                                          
+								AScounter++;
+								PORTBbits.RB6=0; // debug
+							}												
+					}
+			}	
 							
 // ------------------------------------------------------------------------------------------								
 			
-				if(PORTBbits.RB2 ==0)  // buton pentru setare MINUTE
-							{					
-								if(min_buton^PORTBbits.RB2) // detectez frontul
-									{ 										
-									//	flagButA = 1;
-										WaitCounter=0;										
-										if(AMcounter >= 9)
-															
-															{ 
-																AMcounter =0;											
-																if(AZMcounter >= 5)
-																	{ AZMcounter =0;  }
-																else
-																	{  AZMcounter++; }
-															}
-															
-															else
-																{  AMcounter++; }
-									}
+		if(PORTBbits.RB2 ==0)  // buton pentru setare MINUTE	
+			{					
+				if(min_buton^PORTBbits.RB2) // detectez frontul
+					{ 										
+						AlarmaON=1;
+						WaitCounter=0;										
+						if(AMcounter >= 4)
+																
+							{ 
+								AMcounter =0;											
+								if(AZMcounter >= 2)
+									{ AZMcounter =0;  }
+								else
+									{  AZMcounter++; }
 							}
-			}// end if startAlarma			
+																
+						else
+							{  AMcounter++; }
+					}
+			}
+		
+		}// end if startAlarma			
 						
 		else // daca e modul ceas
 		{												
-						if(PORTBbits.RB0 == 0) // buton pentru setare secunde
-							{ 
-								
-								if(sec_buton^PORTBbits.RB0) // detectez frontul
-									{ 
-										WaitCounter=0;
-										flagBut = 1;
-										if(Scounter >= 9)
+			if(PORTBbits.RB0 == 0) // buton pentru setare secunde
+				{ 
+					
+					if(sec_buton^PORTBbits.RB0) // detectez frontul
+						{ 
+							WaitCounter=0;
+							flagBut = 1;
+							if(Scounter >= 9)
+								{ 
+								Scounter = 0;                     
+								PORTBbits.RB4=1;  // debug
+										
+									if(ZScounter >= 5)
+										{ 	ZScounter = 0;
+												
+											if(Mcounter >= 9)
+												
 											{ 
-											Scounter = 0;                     
-											PORTBbits.RB4=1;  // debug
-													
-													if(ZScounter >= 5)
-														{ 	ZScounter = 0;
-															
-															if(Mcounter >= 9)
-															
-															{ 
-																Mcounter =0;											
-																if(ZMcounter >= 5)
-																	{ ZMcounter =0;  }
-																else
-																	{  ZMcounter++; }
-															}
-															
-															else
-																{  Mcounter++; }
-														
-														}
-													else
-														{ ZScounter++; }
-													
+											    Mcounter =0;											
+												if(ZMcounter >= 5)
+													{ ZMcounter =0;  }
+												else
+													{  ZMcounter++; }
 											}
-										else
-											{                                                          
-											Scounter++;
-											//AScounter++;
-											PORTBbits.RB4=0; // debug
-											}												
-									}
-							}
+												
+											else
+												{  Mcounter++; }
+											
+										}
+									else
+										{ ZScounter++; }
+										
+								}
+							else
+								{                                                          
+								Scounter++;
+								
+								PORTBbits.RB4=0; // debug
+								}												
+						}
+				}
 						
 							
 // ------------------------------------------------------------------------------------------							
 						
-						if(PORTBbits.RB2 ==0)  // buton pentru setare MINUTE
-							{					
-								if(min_buton^PORTBbits.RB2) // detectez frontul
-									{ 										
-										flagBut = 1;	
-										WaitCounter=0;										
-										if(Mcounter >= 9)
-															
-															{ 
-																Mcounter =0;											
-																if(ZMcounter >= 5)
-																	{ ZMcounter =0;  }
-																else
-																	{  ZMcounter++; }
-															}
-															
-															else
-																{  Mcounter++; }
-									}
-							}
+		if(PORTBbits.RB2 ==0)  // buton pentru setare MINUTE
+			{					
+				if(min_buton^PORTBbits.RB2) // detectez frontul
+					{ 										
+						flagBut = 1;	
+						WaitCounter=0;										
+						if(Mcounter >= 9)
+											
+											{ 
+												Mcounter =0;											
+												if(ZMcounter >= 5)
+													{ ZMcounter =0;  }
+												else
+													{  ZMcounter++; }
+											}
+											
+											else
+												{  Mcounter++; }
+					}
+			}
+		
+			
+// --------------------------------------------------------------------------------------					
+		if(PORTBbits.RB1==0) // buton pentru ALAMRA
+			{ 	
+									
+				if(alarma_buton^PORTBbits.RB1)
+					{
+						functAlarma++;
 						
-							
-// ------------------------------------------------------------------------------------------					
-						if(PORTBbits.RB1==0) // buton pentru ALAMRA
-							{ 	
+						
+						if(functAlarma>=2)
+							{
 								
-								
-								
-								if(alarma_buton^PORTBbits.RB1)
-									{
-										
-										functAlarma++;
-										if(functAlarma>=2)
-											{
-												
-												stopAlarma=1;
-												functAlarma=0;
-											}
-										if(functAlarma<=2)
-											{
-												startAlarma=1;
-												flagButA=1;	
-											}
-									}
-										
+								stopAlarma=1;
+								functAlarma=0;
 								
 							}
+						if(functAlarma<2)
+							{
+								startAlarma=1;
+									
+							}
+					
+					}
+						
+				
+			}
         }// end else modul ceas	
 
 			
 		sec_buton = PORTBbits.RB0;
 		min_buton = PORTBbits.RB2;
 	    alarma_buton = PORTBbits.RB1;
-	}
+	} // end functie butoane
+
+//------------------------------------------------------------ MAIN -----------------------------
+
 
 
 void main (void)
@@ -243,17 +255,41 @@ void main (void)
 			{   flagTimer = 0;				
 				counterIMP++;	// numarator pentru impulsuri.			
 				check_buttons(); // apelez functia de check buttons
-			
-				if(flagButA==1) PORTBbits.RB3=1;     // LED semnalare alarma
+				Buzz();
+				
+				if(buzzAlarma==1) // sunet alarma
+					{
+						if(buzzNr >=299)
+							{ 
+								PORTBbits.RB4=0;  // pin catre BUZZER, il fac 0, nu mai suna
+								buzzAlarma=0; // flag pentru BUZZER ( vine de la functia BUZZ)
+								functAlarma=0; // counterul pentru modul Alarma ( ON sau OFF)
+								buzzNr=0; // NUmarator de 4 secunde alarma
+								startAlarma=0; // clipit alarma
+								flagEroareAlarma=0; // flag pus pentru a evita eroarea care se produce cand programez alarma.
+								AlarmaON=0; // NU mai e activa, dar ramane programata!
+							}
+						else
+							{
+								buzzNr++;
+								PORTBbits.RB4=1;
+							}
+					}	
+				
+				if(AlarmaON==1) PORTBbits.RB3=1;     // LED semnalare alarma
 				else	PORTBbits.RB3=0;
 					
-				if(stopAlarma==1)
+				if(stopAlarma==1) // daca apas pe STOP, dau reset la alarma si nici nu o mai activez
 					{
 						
 						startAlarma=0;
 						stopAlarma=0;
-						flagButA=0; // sting LED
-						PORTBbits.RB3=0;
+						buzzAlarma=0;
+						buzzNr=0;
+						functAlarma=0;
+						AlarmaON=0; // sting LED
+						PORTBbits.RB3=0; // LED care semnalizeaza ca am alarma ON
+						flagEroareAlarma=0;
 					
 						AScounter=0;
 						AZScounter=0;
@@ -261,9 +297,12 @@ void main (void)
 						AZMcounter=0;
 					}
 					
-				if(startAlarma==1)
+				if(startAlarma==1)  // Ceasul clipeste in modul  setare ALARMA
 					{
 						
+									
+						counterIMP=0;   // nu mai numara ceasul
+						WaitCounter++;  // se incrementeaza un contor
 						Displaycounter++; // counter pentru "clipit"
 						if(Displaycounter < 20)
 							{							
@@ -280,14 +319,14 @@ void main (void)
 										   }
 							}
 						else if (Displaycounter == 49)  Displaycounter = 0;
-									
-						counterIMP=0;   // nu mai numara ceasul
-						WaitCounter++;  // se incrementeaza un contor
+						
 					
 					}
 				
-				if(flagBut==1)
+				if(flagBut==1) // Ceasul clipeste in modul  setare CEAS
 					{	
+						
+						flagEroareCeas=1;
 						counterIMP=0;   // nu mai numara ceasul
 						WaitCounter++;  // se incrementeaza un contor
 						Displaycounter++; // counter pentru "clipit"
@@ -312,6 +351,14 @@ void main (void)
 							}
 									
 					}
+				if((flagBut == 1) & (startAlarma==1)) 	   // If-ul asta e pentru eroare, in caz ca apas pe program ceas si dupa pe program alarma!
+					{
+						
+						flagBut=0;  // sterg flag, nu mai clipeste
+						startAlarma=0; // sterg flag, nu mai clipeste
+						functAlarma=0; // reset counter pt modul alarma
+						
+					}
 					
 				if((flagBut == 0) & (startAlarma==0) )
 					{									
@@ -329,18 +376,28 @@ void main (void)
 										} 
 					}
 				
+					
 				
-					if(WaitCounter == 399)  // cand contorul a ajuns la 400 ( adica 4 secunde )
-							{
+					if(WaitCounter == 399)  // cand contorul a ajuns la 400 ( adica 4 secunde ), CAND AJUNGE LA FINAL!!!
+						{
+	
+							if(AlarmaON==0) // daca nu a fost apasat butonul de programare, counterul de functAlarma se pune pe 0 ( se reseteaza )
+								{
+									functAlarma=0;
+								}
+							else
+								{
+									flagEroareAlarma=1;  // cand ajunge WAITCOUNTER la final, si AlarmaON e 1, adica a fost setata o ora la alarma, flagEroareAlarma se pune pe 1!
+								}
 								
+								flagEroareCeas=0;
 								flagBut=0;  // sterg flag
 								startAlarma=0; // sterg flag;
 								WaitCounter=0;   // sterg contor
-								//functAlarma=0;
 								counterIMP++;  // ceasul reincepe sa numere
 							}
 					
-						
+					
 					
 					
 				if(counterIMP == 99) // cand counter-ul a ajuns la 100, adica 100*10=1000ms, 1 secunda. intra in if-ul asta.
@@ -352,11 +409,11 @@ void main (void)
 									if(ZScounter >= 5)
 										{ 	ZScounter = 0;
 											
-											if(Mcounter >= 9)
+											if(Mcounter >= 4)
 											
 											{ 
 												Mcounter =0;											
-												if(ZMcounter >= 5)
+												if(ZMcounter >= 2)
 													{ ZMcounter =0;  }
 												else
 													{  ZMcounter++; }
