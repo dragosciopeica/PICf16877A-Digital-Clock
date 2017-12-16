@@ -6,6 +6,7 @@
 //--------------------variable definition----------------------------------
 
 int vec_numere[10]= { 63,6,91,79,102,109,125,7,127,111};/*  b'0000110,b'01011011,b'0101111,b'01100110,b'01101101,b'01111101,b'00000111,b'11111111,b'01101111 */
+int vec_numere_alarma[10]= { 191,134,219,207,230,237,253,135,255,239};/*  b'0000110,b'01011011,b'0101111,b'01100110,b'01101101,b'01111101,b'00000111,b'11111111,b'01101111 */
 volatile int flagTimer = 0, flagBut = 0, sec_buton = 0, min_buton = 0, alarma_buton = 0, startAlarma=0, stopAlarma = 0, AlarmaON=0,buzzAlarma=0,flagEroareAlarma=0,flagEroareCeas=0;
 int Scounter = 0, Mcounter=0,ZScounter = 0, ZMcounter=0; // numaratoare pentru secunde, zeciS, minute, zeciM
 int AScounter = 0, AMcounter=0,AZScounter = 1, AZMcounter=0; // numaratoare pentru secunde, zeciS, minute, zeciM ALARMA
@@ -54,11 +55,30 @@ void Buzz()
 		unsigned char cat_var = 0b00001000;
 		unsigned char masca_cat = 0b11110000;
 		
-		cat_var = ~(cat_var >> (catod-1)); // shiftam la dreapta variabila default cat_var, in functie de cifra.
-		cat_var = cat_var ^ masca_cat;
-		PORTA = cat_var; // Vor fi aprinsi catozii pe rand, foarte rapid.
-		PORTD=vec_numere[cifra]; // afisam cifrele prin intermediul vectorului, unde am definit cifrele in DEC.
-		
+		if(AlarmaON==1)
+			{  
+				if(catod == 1)
+				{	
+					cat_var = ~(cat_var >> (catod-1)); // shiftam la dreapta variabila default cat_var, in functie de cifra.
+					cat_var = cat_var ^ masca_cat;
+					PORTA = cat_var; // Vor fi aprinsi catozii pe rand, foarte rapid.
+					PORTD=vec_numere_alarma[cifra]; // afisam cifrele prin intermediul vectorului, unde am definit cifre
+				}
+				else
+				{
+					cat_var = ~(cat_var >> (catod-1)); // shiftam la dreapta variabila default cat_var, in functie de cifra.
+					cat_var = cat_var ^ masca_cat;
+					PORTA = cat_var; // Vor fi aprinsi catozii pe rand, foarte rapid.
+					PORTD=vec_numere[cifra]; // afisam cifrele prin intermediul vectorului, unde am definit cifre		
+				}		
+			}
+		else
+			{
+				cat_var = ~(cat_var >> (catod-1)); // shiftam la dreapta variabila default cat_var, in functie de cifra.
+				cat_var = cat_var ^ masca_cat;
+				PORTA = cat_var; // Vor fi aprinsi catozii pe rand, foarte rapid.
+				PORTD=vec_numere[cifra]; // afisam cifrele prin intermediul vectorului, unde am definit cifrele in DEC.
+			}
 	}
 
 
