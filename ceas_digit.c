@@ -1,4 +1,3 @@
-
 #include <xc.h>
 #include <pic16f77.h>
 #include <delays.h>
@@ -137,11 +136,11 @@ void  check_buttons() // functia care verifica butoanele. odata la 10ms
 					{ 										
 						AlarmaON=1;
 						WaitCounter=0;										
-						if(AMcounter >= 4)
+						if(AMcounter >= 9)
 																
 							{ 
 								AMcounter =0;											
-								if(AZMcounter >= 2)
+								if(AZMcounter >= 5)
 									{ AZMcounter =0;  }
 								else
 									{  AZMcounter++; }
@@ -429,11 +428,11 @@ void main (void)
 									if(ZScounter >= 5)
 										{ 	ZScounter = 0;
 											
-											if(Mcounter >= 4)
+											if(Mcounter >= 9)
 											
 											{ 
 												Mcounter =0;											
-												if(ZMcounter >= 2)
+												if(ZMcounter >= 5)
 													{ ZMcounter =0;  }
 												else
 													{  ZMcounter++; }
@@ -471,7 +470,3 @@ void interrupt tc_int (void)  // intreruperea, de aici primesc timpul. AM o intr
     PIR1bits.TMR1IF=0; // punem interrupt flag pe 0
     }
 }
-
-
-
-
